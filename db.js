@@ -48,5 +48,8 @@ db.exec(`
   ALTER TABLE corners ADD COLUMN name TEXT;
 `);
 
+db.exec(`
+  ALTER TABLE corners ADD COLUMN favorite INTEGER DEFAULT 0;
+`);
 
 module.exports = db;
