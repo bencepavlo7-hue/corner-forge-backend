@@ -43,143 +43,185 @@ app.get("/api/matches", (req, res) => {
   }
 });
 
-
 /* =========================
    ADD MATCH
 ========================= */
 app.post("/api/matches", (req, res) => {
-  const { name } = req.body;
+  try {
+    const { name } = req.body;
 
-  db.run(
-    "INSERT INTO matches (name) VALUES (?)",
-    [name],
-    function (err) {
-      if (err) return res.status(500).json(err);
+    const result = db
+      .prepare("INSERT INTO matches (name) VALUES (?)")
+      .run(name);
 
-      res.json({
-        id: this.lastID,
-        name
-      });
-    }
-  );
+    res.json({
+      id: result.lastInsertRowid,
+      name
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 /* =========================
    DELETE MATCH
 ========================= */
 app.delete("/api/matches/:id", (req, res) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  db.run("DELETE FROM matches WHERE id = ?", [id]);
-  db.run("DELETE FROM notes WHERE matchId = ?", [id]);
-  db.run("DELETE FROM videos WHERE matchId = ?", [id]);
+    db.prepare("DELETE FROM matches WHERE id = ?").run(id);
+    db.prepare("DELETE FROM notes WHERE matchId = ?").run(id);
+    db.prepare("DELETE FROM videos WHERE matchId = ?").run(id);
 
-  res.json({ success: true });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
+
 /* =========================
    GET SINGLE MATCH
 ========================= */
 app.get("/api/matches/:id", (req, res) => {
-  const matchId = req.params.id;
+  try {
+    const matchId = req.params.id;
 
-  db.get("SELECT * FROM matches WHERE id = ?", [matchId], (err, match) => {
-    if (err) return res.status(500).json(err);
-    if (!match) return res.status(404).json({ error: "Match not found" });
+    const match = db
+      .prepare("SELECT * FROM matches WHERE id = ?")
+      .get(matchId);
 
-    db.all("SELECT * FROM corners WHERE matchId = ?", [matchId], (err, corners) => {
-      res.json({
-        ...match,
-        corners: corners || []
-      });
+    const corners = db
+      .prepare("SELECT * FROM corners WHERE matchId = ?")
+      .all(matchId);
+
+    res.json({
+      ...match,
+      corners: corners || []
     });
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+/* =========================
+   GET NOTES
+========================= */
+app.get("/api/corners/:id/notes", (req, res) => {
+  try {
+    const rows = db
+      .prepare("SELECT * FROM notes WHERE cornerId = ?")
+      .all(req.params.id);
+
+    res.json(rows || []);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 /* =========================
    ADD NOTE
 ========================= */
-// GET NOTES (cornerhez)
-app.get("/api/corners/:id/notes", (req, res) => {
-  db.all(
-    "SELECT * FROM notes WHERE cornerId = ?",
-    [req.params.id],
-    (err, rows) => {
-      if (err) {
-        console.log("DB ERROR:", err);
-        return res.status(500).json({ error: "DB error" });
-      }
-
-      res.json(rows || []);
-    }
-  );
-});
-
-// ADD NOTE (cornerhez)
 app.post("/api/corners/:id/notes", (req, res) => {
-  const { text } = req.body;
+  try {
+    const { text } = req.body;
 
-  db.run(
-    "INSERT INTO notes (cornerId, text) VALUES (?, ?)",
-    [req.params.id, text],
-    function (err) {
-      if (err) return res.status(500).json(err);
-      res.json({ id: this.lastID, text });
-    }
-  );
+    const result = db
+      .prepare("INSERT INTO notes (cornerId, text) VALUES (?, ?)")
+      .run(req.params.id, text);
+
+    res.json({
+      id: result.lastInsertRowid,
+      text
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
+
 /* =========================
    DELETE NOTE
 ========================= */
 app.delete("/api/corners/:id/notes/:noteId", (req, res) => {
-  db.run("DELETE FROM notes WHERE id = ?", [req.params.noteId]);
-  res.json({ success: true });
+  try {
+    db.prepare("DELETE FROM notes WHERE id = ?").run(req.params.noteId);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+/* =========================
+   GET VIDEOS
+========================= */
+app.get("/api/corners/:id/videos", (req, res) => {
+  try {
+    const rows = db
+      .prepare("SELECT * FROM videos WHERE cornerId = ?")
+      .all(req.params.id);
+
+    res.json(rows || []);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 /* =========================
    ADD VIDEO
 ========================= */
-app.get("/api/corners/:id/videos", (req, res) => {
-  db.all(
-    "SELECT * FROM videos WHERE cornerId = ?",
-    [req.params.id],
-    (err, rows) => res.json(rows || [])
-  );
-});
-
 app.post("/api/corners/:id/videos", (req, res) => {
-  const { url } = req.body;
+  try {
+    const { url } = req.body;
 
-  db.run(
-    "INSERT INTO videos (cornerId, url) VALUES (?, ?)",
-    [req.params.id, url],
-    function (err) {
-      if (err) return res.status(500).json(err);
-      res.json({ id: this.lastID, url });
-    }
-  );
+    const result = db
+      .prepare("INSERT INTO videos (cornerId, url) VALUES (?, ?)")
+      .run(req.params.id, url);
+
+    res.json({
+      id: result.lastInsertRowid,
+      url
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
+/* =========================
+   DELETE VIDEO
+========================= */
 app.delete("/api/corners/:id/videos/:videoId", (req, res) => {
-  db.run("DELETE FROM videos WHERE id = ?", [req.params.videoId]);
-  res.json({ success: true });
+  try {
+    db.prepare("DELETE FROM videos WHERE id = ?").run(req.params.videoId);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 /* =========================
    ADD CORNER
 ========================= */
 app.post("/api/matches/:id/corners", (req, res) => {
-  const matchId = req.params.id;
-  const c = req.body;
+  try {
+    const matchId = req.params.id;
+    const c = req.body;
 
-  console.log("BODY:", req.body);
-
-  db.run(
-    `INSERT INTO corners 
-    (matchId, name, side, type, delivery, playersInBox, playersOutBox, firstContact, firstContactZone, finishingZone, blockers, secondBall, outcome, kicker)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
+    const result = db.prepare(`
+      INSERT INTO corners 
+      (matchId, name, side, type, delivery, playersInBox, playersOutBox, firstContact, firstContactZone, finishingZone, blockers, secondBall, outcome, kicker)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
       matchId,
-      c.name, // 🔥 EZ HIÁNYZOTT
+      c.name,
       c.side,
       c.type,
       c.delivery,
@@ -192,126 +234,144 @@ app.post("/api/matches/:id/corners", (req, res) => {
       c.secondBall ? 1 : 0,
       c.outcome,
       c.kicker
-    ],
-    function (err) {
-      if (err) return res.status(500).json(err);
+    );
 
-      res.json({
-        id: this.lastID,
-        ...c // 🔥 itt már benne lesz a name is
-      });
-    }
-  );
+    res.json({
+      id: result.lastInsertRowid,
+      ...c
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 /* =========================
-   GET CORNERS
+   GET CORNERS (MATCH)
 ========================= */
 app.get("/api/matches/:id/corners", (req, res) => {
-  const matchId = req.params.id;
+  try {
+    const rows = db
+      .prepare("SELECT * FROM corners WHERE matchId = ?")
+      .all(req.params.id);
 
-  db.all(
-    "SELECT * FROM corners WHERE matchId = ?",
-    [matchId],
-    (err, rows) => {
-      if (err) return res.status(500).json(err);
-
-      res.json(rows);
-    }
-  );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 /* =========================
    DELETE CORNER
 ========================= */
 app.delete("/api/matches/:matchId/corners/:cornerId", (req, res) => {
-  db.run(
-    "DELETE FROM corners WHERE id = ?",
-    [req.params.cornerId],
-    (err) => {
-      if (err) return res.status(500).json(err);
-
-      res.json({ success: true });
-    }
-  );
+  try {
+    db.prepare("DELETE FROM corners WHERE id = ?").run(req.params.cornerId);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 /* =========================
    SAVE SUMMARY
 ========================= */
 app.post("/api/matches/:id/summary", (req, res) => {
-  const { general, attacking, defensive, players } = req.body;
-  const matchId = req.params.id;
+  try {
+    const { general, attacking, defensive, players } = req.body;
+    const matchId = req.params.id;
 
-  db.run(
-    `UPDATE matches 
-     SET general=?, attacking=?, defensive=?, players=? 
-     WHERE id=?`,
-    [general, attacking, defensive, players, matchId],
-    function (err) {
-      if (err) return res.status(500).json(err);
+    db.prepare(`
+      UPDATE matches 
+      SET general=?, attacking=?, defensive=?, players=? 
+      WHERE id=?
+    `).run(general, attacking, defensive, players, matchId);
 
-      res.json({ success: true });
-    }
-  );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
 /* =========================
    GET SUMMARY
 ========================= */
 app.get("/api/matches/:id/summary", (req, res) => {
-  const matchId = req.params.id;
+  try {
+    const matchId = req.params.id;
 
-  db.get(
-    "SELECT general, attacking, defensive, players FROM matches WHERE id=?",
-    [matchId],
-    (err, row) => {
-      if (err) return res.status(500).json(err);
+    const row = db
+      .prepare("SELECT general, attacking, defensive, players FROM matches WHERE id=?")
+      .get(matchId);
 
-      res.json(row || {});
-    }
-  );
+    res.json(row || {});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
+
 /* =========================
    GET ALL CORNERS
 ========================= */
 app.get("/api/corners", (req, res) => {
-  db.all("SELECT * FROM corners", [], (err, rows) => {
-    if (err) return res.status(500).json(err);
-
+  try {
+    const rows = db.prepare("SELECT * FROM corners").all();
     res.json(rows);
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
 });
 
-app.post("/api/corners/:id/favorite", (req, res) => {
-  const { favorite } = req.body;
-
-  db.run(
-    "UPDATE corners SET favorite = ? WHERE id = ?",
-    [favorite ? 1 : 0, req.params.id],
-    function (err) {
-      if (err) return res.status(500).json(err);
-
-      res.json({ success: true });
-    }
-  );
-});
-
-app.get("/api/backup", (req, res) => {
-  const dbPath = path.join(__dirname, "database.sqlite");
-  const backupPath = path.join(__dirname, "backup.sqlite");
-
-  fs.copyFileSync(dbPath, backupPath);
-
-  res.download(backupPath);
-});
 /* =========================
-   START SERVER
+   FAVORITE TOGGLE
+========================= */
+app.post("/api/corners/:id/favorite", (req, res) => {
+  try {
+    const { favorite } = req.body;
+
+    db.prepare(
+      "UPDATE corners SET favorite = ? WHERE id = ?"
+    ).run(favorite ? 1 : 0, req.params.id);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+/* =========================
+   BACKUP
+========================= */
+app.get("/api/backup", (req, res) => {
+  try {
+    const dbPath = path.join(__dirname, "database.sqlite");
+    const backupPath = path.join(__dirname, "backup.sqlite");
+
+    fs.copyFileSync(dbPath, backupPath);
+
+    res.download(backupPath);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Backup error" });
+  }
+});
+
+/* =========================
+   ROOT
 ========================= */
 app.get("/", (req, res) => {
   res.send("API running");
 });
 
+/* =========================
+   START SERVER
+========================= */
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
