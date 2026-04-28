@@ -319,14 +319,12 @@ app.get("/api/backup", (req, res) => {
 /* =========================
    START SERVER
 ========================= */
-app.listen(3001, () => {
-  console.log("🔥 SQLITE SERVER RUNNING ON 3001 🔥");
+app.get("/", (req, res) => {
+  res.send("API running");
 });
+
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log("SERVER RUNNING ON", PORT);
-});
-app.get("/", (req, res) => {
-  res.send("API running");
 });
