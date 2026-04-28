@@ -1,4 +1,15 @@
 const sqlite3 = require("sqlite3").verbose();
+const path = require("path");
+
+const dbPath = path.join(__dirname, "database.sqlite");
+
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error("DB ERROR:", err);
+  } else {
+    console.log("DB connected");
+  }
+});
 
 const db = new sqlite3.Database("./database.sqlite");
 
@@ -36,22 +47,23 @@ db.serialize(() => {
 
   // 🔥 CORNERS (EZ HIÁNYZOTT)
   db.run(`
-    CREATE TABLE IF NOT EXISTS corners (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      matchId INTEGER,
-      side TEXT,
-      type TEXT,
-      delivery TEXT,
-      playersInBox INTEGER,
-      playersOutBox INTEGER,
-      firstContact TEXT,
-      firstContactZone INTEGER,
-      finishingZone INTEGER,
-      blockers INTEGER,
-      secondBall INTEGER,
-      outcome TEXT,
-      kicker TEXT
-    )
-  `);
+  CREATE TABLE IF NOT EXISTS corners (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    matchId INTEGER,
+    name TEXT,
+    side TEXT,
+    type TEXT,
+    delivery TEXT,
+    playersInBox INTEGER,
+    playersOutBox INTEGER,
+    firstContact TEXT,
+    firstContactZone INTEGER,
+    finishingZone INTEGER,
+    blockers INTEGER,
+    secondBall INTEGER,
+    outcome TEXT,
+    kicker TEXT
+  )
+`);
 });
 module.exports = db;
