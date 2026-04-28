@@ -234,21 +234,21 @@ app.post("/api/matches/:id/corners", (req, res) => {
       (matchId, name, side, type, delivery, playersInBox, playersOutBox, firstContact, firstContactZone, finishingZone, blockers, secondBall, outcome, kicker)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      matchId,
-      c.name,
-      c.side,
-      c.type,
-      c.delivery,
-      c.playersInBox,
-      c.playersOutBox,
-      c.firstContact,
-      c.firstContactZone,
-      c.finishingZone,
-      c.blockers ? 1 : 0,
-      c.secondBall ? 1 : 0,
-      c.outcome,
-      c.kicker
-    );
+  matchId,
+  c.name || "",
+  c.side || "",
+  c.type || "",
+  c.delivery || "",
+  c.playersInBox || 0,
+  c.playersOutBox || 0,
+  c.firstContact || "",
+  c.firstContactZone || 0,
+  c.finishingZone || 0,
+  c.blockers ? 1 : 0,
+  c.secondBall ? 1 : 0,
+  c.outcome || "",
+  c.kicker || ""
+);
 
     res.json({
       id: result.lastInsertRowid,
