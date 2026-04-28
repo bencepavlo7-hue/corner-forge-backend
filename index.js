@@ -42,7 +42,6 @@ app.get("/api/matches", (req, res) => {
     res.status(500).json({ error: "DB error" });
   }
 });
-    if (err) return res.status(500).json(err);
 
     const promises = matches.map(match => {
       return new Promise((resolve) => {
