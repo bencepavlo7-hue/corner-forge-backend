@@ -34,7 +34,14 @@ app.post("/api/upload", upload.single("video"), (req, res) => {
    GET MATCHES
 ========================= */
 app.get("/api/matches", (req, res) => {
-  db.all("SELECT * FROM matches", [], (err, matches) => {
+  try {
+    const matches = db.prepare("SELECT * FROM matches").all();
+    res.json(matches);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(err);
+  }
+});
     if (err) return res.status(500).json(err);
 
     const promises = matches.map(match => {
