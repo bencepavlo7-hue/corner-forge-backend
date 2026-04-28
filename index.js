@@ -39,7 +39,7 @@ app.get("/api/matches", (req, res) => {
     res.json(matches);
   } catch (err) {
     console.error(err);
-    res.status(500).json(err);
+    res.status(500).json({ error: "DB error" });
   }
 });
     if (err) return res.status(500).json(err);
