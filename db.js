@@ -44,4 +44,9 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  ALTER TABLE corners ADD COLUMN name TEXT;
+`);
+
+
 module.exports = db;
