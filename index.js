@@ -71,13 +71,27 @@ app.delete("/api/matches/:id", (req, res) => {
   try {
     const id = req.params.id;
 
+    // 1. lekérjük a corner-eket
+    const corners = db
+      .prepare("SELECT id FROM corners WHERE matchId = ?")
+      .all(id);
+
+    // 2. töröljük a hozzájuk tartozó notes + videos
+    for (let c of corners) {
+      db.prepare("DELETE FROM notes WHERE cornerId = ?").run(c.id);
+      db.prepare("DELETE FROM videos WHERE cornerId = ?").run(c.id);
+    }
+
+    // 3. töröljük a corner-eket
+    db.prepare("DELETE FROM corners WHERE matchId = ?").run(id);
+
+    // 4. töröljük a match-et
     db.prepare("DELETE FROM matches WHERE id = ?").run(id);
-    db.prepare("DELETE FROM notes WHERE matchId = ?").run(id);
-    db.prepare("DELETE FROM videos WHERE matchId = ?").run(id);
 
     res.json({ success: true });
+
   } catch (err) {
-    console.error(err);
+    console.error("DELETE MATCH ERROR:", err);
     res.status(500).json({ error: "DB error" });
   }
 });
@@ -216,7 +230,7 @@ app.post("/api/matches/:id/corners", (req, res) => {
     const c = req.body;
 
     const result = db.prepare(`
-      INSERT INTO corners 
+      INSERT INTO corners
       (matchId, name, side, type, delivery, playersInBox, playersOutBox, firstContact, firstContactZone, finishingZone, blockers, secondBall, outcome, kicker)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
@@ -240,8 +254,9 @@ app.post("/api/matches/:id/corners", (req, res) => {
       id: result.lastInsertRowid,
       ...c
     });
+
   } catch (err) {
-    console.error(err);
+    console.error("CORNER ERROR:", err); // 🔥 EZ FONTOS
     res.status(500).json({ error: "DB error" });
   }
 });
