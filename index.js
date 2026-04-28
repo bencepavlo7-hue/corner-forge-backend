@@ -43,23 +43,6 @@ app.get("/api/matches", (req, res) => {
   }
 });
 
-    const promises = matches.map(match => {
-      return new Promise((resolve) => {
-        db.all("SELECT * FROM notes WHERE matchId = ?", [match.id], (err, notes) => {
-          db.all("SELECT * FROM videos WHERE matchId = ?", [match.id], (err, videos) => {
-            resolve({
-              ...match,
-              notes: notes || [],
-              videos: videos || []
-            });
-          });
-        });
-      });
-    });
-
-    Promise.all(promises).then(result => res.json(result));
-  });
-});
 
 /* =========================
    ADD MATCH
