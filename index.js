@@ -26,7 +26,7 @@ app.post("/api/upload", upload.single("video"), (req, res) => {
   }
 
   res.json({
-    url: `https://better-times-lick.loca.lt/uploads/${req.file.filename}`
+    url: `https://corner-forge-backend.onrender.com/uploads/${req.file.filename}`
   });
 });
 
@@ -326,4 +326,7 @@ const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log("SERVER RUNNING ON", PORT);
+});
+app.get("/", (req, res) => {
+  res.send("API running");
 });
